@@ -11,6 +11,7 @@ This started as a fork of the Rasa Financial Demo chatbot.
   - [Install dependencies](#install-dependencies)
   - [Run the bot](#run-the-bot)
   - [Overview of the files](#overview-of-the-files)
+  - [Test](#test)
   - [Things you can ask the bot](#things-you-can-ask-the-bot)
   - [Handoff](#handoff)
     - [Try it out](#try-it-out)
@@ -89,6 +90,12 @@ Refer to our guided workflow in the [Wiki page](https://github.com/RasaHQ/financ
 
 `tests/e2e.md` - end-to-end test stories
 
+
+## Test
+
+```sh
+rasa shell --conversation-id greg
+```
 
 ## Things you can ask the bot
 
