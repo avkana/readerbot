@@ -1,13 +1,13 @@
 
-# Financial Services Example Bot
+# Reader Chatbot
 
-This is an example chatbot demonstrating how to build AI assistants for financial services and banking. This starter pack can be used as a base for your own development or as a reference guide for implementing common banking-industry features with Rasa. It includes pre-built intents, actions, and stories for handling conversation flows like checking spending history and transferring money to another account.
+This started as a fork of the Rasa Financial Demo chatbot.
 
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 **Table of Contents**
 
-- [Financial Services Example Bot](#financial-services-example-bot)
+- [Reader Chatbot](#reader-chatbot)
   - [Install dependencies](#install-dependencies)
   - [Run the bot](#run-the-bot)
   - [Overview of the files](#overview-of-the-files)
