@@ -1,3 +1,5 @@
 -r actions/requirements-actions.txt
 rasa[spacy]~=2.1.0
 rasa-sdk~=2.1.1
+betterreads~=0.4.2
+tinydb~=4.3.0

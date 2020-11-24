@@ -22,12 +22,11 @@ from actions.parsing import (
     parse_duckling_currency,
 )
 from actions.profile import create_mock_profile
+from actions.api.store import Store
 
 from actions.custom_forms import CustomFormValidationAction
 
-
 logger = logging.getLogger(__name__)
-
 
 NEXT_FORM_NAME = {
     "pay_cc": "cc_payment_form",
@@ -42,6 +41,79 @@ FORM_DESCRIPTION = {
     "transaction_search_form": "transaction search",
 }
 
+anonymous_profile = {
+    "id": "anonymous",
+    "name": "anonymous"
+}
+
+def get_user_id_from_event(tracker: Tracker) -> Text:
+    """Pulls "session_started" event, if available, and 
+       returns the userId from the channel's metadata.
+       Anonymous user profile ID is returned if channel 
+       metadata is not available
+    """
+    event = tracker.get_last_event_for("session_started")
+    if event is not None:
+        # Read the channel's metadata.
+        metadata = event.get("metadata", {})
+        # If "usedId" key is missing, return anonymous ID.
+        return metadata.get("userId", anonymous_profile.get("id"))
+
+    return anonymous_profile.get("id")
+
+class ActionSessionStart(Action):
+    def name(self) -> Text:
+        return "action_session_start"
+
+    @staticmethod
+    async def fetch_slots(tracker: Tracker) -> List[EventType]:
+        """Add user profile to the slots if it is not set."""
+
+        slots = []
+
+        # Start by copying all the existing slots
+        for key in tracker.current_slot_values().keys():
+            slots.append(SlotSet(key=key, value=tracker.get_slot(key)))
+
+        user_channel = tracker.get_latest_input_channel()
+        sender_id = tracker.sender_id
+        user_profile = tracker.get_slot("user_profile")
+        user_name = tracker.get_slot("user_name")
+
+        db = Store()
+
+        if user_profile is None:
+            id = get_user_id_from_event(tracker)
+            if id == anonymous_profile.get("id"):
+                user_profile = anonymous_profile
+
+            slots.append(SlotSet(key="user_profile", value=user_profile))
+
+        if user_name is None:
+            slots.append(SlotSet(key="user_name", value=user_profile.get("name")))
+
+        return slots
+
+         
+    async def run(
+        self,
+        dispatcher: CollectingDispatcher,
+        tracker: Tracker,
+        domain: Dict[Text, Any],
+    ) -> List[EventType]:
+
+        # the session should begin with a `session_started` event
+        events = [SessionStarted()]
+
+        # any slots that should be carried over should come after the
+        # `session_started` event
+        newEvents = await self.fetch_slots(tracker)
+        events.extend(newEvents)
+
+        # an `action_listen` should be added at the end as a user message follows
+        events.append(ActionExecuted("action_listen"))
+
+        return events
 
 class ActionPayCC(Action):
     """Pay credit card."""
@@ -603,53 +675,6 @@ class ActionShowTransferCharge(Action):
             events.append(SlotSet("continue_form", None))
             # # avoid that bot goes in listen mode after UserUtteranceReverted
             events.append(FollowupAction(active_form_name))
-
-        return events
-
-
-class ActionSessionStart(Action):
-    """Executes at start of session"""
-
-    def name(self) -> Text:
-        """Unique identifier of the action"""
-        return "action_session_start"
-
-    @staticmethod
-    def _slot_set_events_from_tracker(
-        tracker: "Tracker",
-    ) -> List["SlotSet"]:
-        """Fetches SlotSet events from tracker and carries over keys and values"""
-        return [
-            SlotSet(
-                key=event.get("name"),
-                value=event.get("value"),
-            )
-            for event in tracker.events
-            if event.get("event") == "slot"
-        ]
-
-    async def run(
-        self,
-        dispatcher: CollectingDispatcher,
-        tracker: Tracker,
-        domain: Dict[Text, Any],
-    ) -> List[EventType]:
-        """Executes the custom action"""
-        # the session should begin with a `session_started` event
-        events = [SessionStarted()]
-
-        events.extend(self._slot_set_events_from_tracker(tracker))
-
-        # create mock profile
-        user_profile = create_mock_profile()
-
-        # initialize slots from mock profile
-        for key, value in user_profile.items():
-            if value is not None:
-                events.append(SlotSet(key=key, value=value))
-
-        # an `action_listen` should be added at the end
-        events.append(ActionExecuted("action_listen"))
 
         return events
 
