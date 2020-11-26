@@ -7,6 +7,8 @@ logger = logging.getLogger(__name__)
 logging.getLogger("").handlers = []
 logging.basicConfig(format="%(message)s", level=logging.DEBUG)
 
+# TinyDB docs: https://tinydb.readthedocs.io/en/stable/usage.html#updating-data
+
 class Store(object):
   def __init__(self):
     userfile = "users.json"
